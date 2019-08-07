@@ -5,8 +5,9 @@ location <- 'D:\\Demyd\\Personal\\R\\kaggle\\'
 filename <- 'application_test.csv'
 data_all <- data.table(read.csv(paste(location, filename, sep = "")))
 vars <- as.list(c('AMT_INCOME_TOTAL',	'AMT_CREDIT',	'AMT_ANNUITY',	'AMT_GOODS_PRICE',	'REGION_POPULATION_RELATIVE',	'HOUR_APPR_PROCESS_START'))
+vars_init <- c('AMT_INCOME_TOTAL',	'AMT_CREDIT',	'AMT_ANNUITY',	'AMT_GOODS_PRICE',	'REGION_POPULATION_RELATIVE',	'HOUR_APPR_PROCESS_START')
 dof <- as.list(1:30)
-data_vars <- data_all[, ..vars]
+data_vars <- data_all[, ..vars_init]
 
 #data_all$AMT_INCOME_TOTAL
 #check <- sort(data_all$AMT_INCOME_TOTAL)[1:(length(data_all$AMT_INCOME_TOTAL)-100)]
@@ -134,7 +135,7 @@ makeDistributions = function(
   data <- unlist(data_init[, ..name])
   data <- data[order(data)]
   data <- data[1:(length(data) - top_items)] 
-  par(mfrow=c(3, 1))
+  par(mfrow=c(3, 2))
   
   #per quantity
   hist(data, breaks = bins, main = paste("Initial histogram, conf.interval", conf_interval, "qty =", ifelse(qty > length(data), length(data), qty)))
@@ -145,6 +146,10 @@ makeDistributions = function(
   #chi distribution
   hist(scale(data, center = FALSE), breaks = bins, prob = TRUE, ylim = c(0, ylim), xlim = c(0, xlim), main = paste("Chi distribution, confidence =", conf_interval, "qty =", ifelse(qty > length(data), length(data), qty), "dof =", dof))
   curve(dchisq(x, dof),col="red",lty=2,add=TRUE)
+  #t-distribuion
+  #hist(scale(data, center = FALSE), breaks = bins, prob = TRUE, ylim = c(0, ylim), xlim = c(0, xlim), main = paste("t-distribution, confidence =", conf_interval, "qty =", ifelse(qty > length(data), length(data), qty), "dof =", dof))
+  #curve(dnorm(x),col = "red")
+  #curve(dt(x, df = dof), add = TRUE)
   
 }
 
