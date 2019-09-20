@@ -1,7 +1,8 @@
 library(data.table)
 library(manipulate)
 
-location <- 'D:\\Demyd\\Personal\\R\\kaggle\\'
+
+location <- 'C:\\Users\\Demyd_Dzyuban\\Documents\\Demyd\\Personal\\Kaggle\\' ##D:\\Demyd\\Personal\\R\\kaggle\\'
 filename <- 'application_test.csv'
 data_all <- data.table(read.csv(paste(location, filename, sep = "")))
 vars <- as.list(c('AMT_INCOME_TOTAL',	'AMT_CREDIT',	'AMT_ANNUITY',	'AMT_GOODS_PRICE',	'REGION_POPULATION_RELATIVE',	'HOUR_APPR_PROCESS_START'))
@@ -9,10 +10,6 @@ vars_init <- c('AMT_INCOME_TOTAL',	'AMT_CREDIT',	'AMT_ANNUITY',	'AMT_GOODS_PRICE
 dof <- as.list(1:30)
 data_vars <- data_all[, ..vars_init]
 
-#data_all$AMT_INCOME_TOTAL
-#check <- sort(data_all$AMT_INCOME_TOTAL)[1:(length(data_all$AMT_INCOME_TOTAL)-100)]
-
-#x <- c(1,2,3)
 
 makeHistScaled = function( data_init
                      ,data_norm
@@ -110,16 +107,17 @@ makeHist = function( data_init
         abline(v = right_limit, col = "red", lwd = 2)
       }
     }
-
   }
 
 }
 
+#dev.off()
 
 makeDistributions = function( 
                               data_init
                              ,data_norm
                              ,variable
+                             ,ditribution_type
                              ,top_items
                              ,qty
                              ,bins
@@ -135,21 +133,50 @@ makeDistributions = function(
   data <- unlist(data_init[, ..name])
   data <- data[order(data)]
   data <- data[1:(length(data) - top_items)] 
-  par(mfrow=c(3, 2))
+  par(mfrow=c(3, 1))
   
   #per quantity
   hist(data, breaks = bins, main = paste("Initial histogram, conf.interval", conf_interval, "qty =", ifelse(qty > length(data), length(data), qty)))
-  #normal distribution
-  hist(scale(data), breaks = bins, prob = TRUE, ylim=c(0,ylim), main = paste("Normal distribution, confidence =", conf_interval, "qty =", ifelse(qty > length(data), length(data), qty)))
-  curve(dnorm(x, mean(scale(data, center = TRUE, scale = TRUE)), sd(scale(data, center = TRUE, scale = TRUE))), add=TRUE, col="darkblue", lwd=2)
   
-  #chi distribution
-  hist(scale(data, center = FALSE), breaks = bins, prob = TRUE, ylim = c(0, ylim), xlim = c(0, xlim), main = paste("Chi distribution, confidence =", conf_interval, "qty =", ifelse(qty > length(data), length(data), qty), "dof =", dof))
-  curve(dchisq(x, dof),col="red",lty=2,add=TRUE)
-  #t-distribuion
-  #hist(scale(data, center = FALSE), breaks = bins, prob = TRUE, ylim = c(0, ylim), xlim = c(0, xlim), main = paste("t-distribution, confidence =", conf_interval, "qty =", ifelse(qty > length(data), length(data), qty), "dof =", dof))
-  #curve(dnorm(x),col = "red")
-  #curve(dt(x, df = dof), add = TRUE)
+  
+  if (ditribution_type == 'normal'){
+    #normal distribution
+    hist(scale(data), breaks = bins, prob = TRUE, ylim=c(0,ylim), main = paste("Normal distribution, confidence =", conf_interval, "qty =", ifelse(qty > length(data), length(data), qty)))
+    curve(dnorm(x, mean(scale(data, center = TRUE, scale = TRUE)), sd(scale(data, center = TRUE, scale = TRUE))), add=TRUE, col="darkblue", lwd=2)
+  }
+  
+  if (ditribution_type == 'chi'){
+    #chi distribution
+    hist(scale(data, center = FALSE), breaks = bins, prob = TRUE, ylim = c(0, ylim), xlim = c(0, xlim), main = paste("Chi distribution, confidence =", conf_interval, "qty =", ifelse(qty > length(data), length(data), qty), "dof =", dof))
+    curve(dchisq(x, dof),col="red",lty=2,add=TRUE)
+  }
+  
+  if (ditribution_type == 't-dist'){
+    #t-distribuion
+    hist(scale(data, center = FALSE), breaks = bins, prob = TRUE, ylim = c(0, ylim), xlim = c(0, xlim), main = paste("t-distribution, confidence =", conf_interval, "qty =", ifelse(qty > length(data), length(data), qty), "dof =", dof))
+    curve(dnorm(x),col = "red")
+    curve(dt(x, df = dof), add = TRUE)
+  }  
+
+  conf_position <- round((1 - conf_interval)/2 * qty, 0)
+  if (conf_interval_type != 'none'){
+    
+    if(conf_interval_type == 'left') {
+      left_limit <- data_norm[order(data_norm)][conf_position]
+      abline(v = left_limit, col = "red", lwd = 2)
+    }else{
+      if(conf_interval_type == 'right'){
+        right_limit <- data_norm[order(data_norm)][qty - conf_position]
+        abline(v = right_limit, col = "red", lwd = 2)
+      }else{
+        left_limit <- data_norm[order(data_norm)][conf_position]
+        right_limit <- data_norm[order(data_norm)][qty - conf_position]
+        
+        abline(v = left_limit, col = "red", lwd = 2)
+        abline(v = right_limit, col = "red", lwd = 2)
+      }
+    }
+  }  
   
 }
 
@@ -202,6 +229,7 @@ manipulate(
 
 manipulate(
   variable = picker(vars),
+  ditribution_type = picker('normal', 'chi', 't-dist'),
   top_items = slider(1, 1000),
   qty = slider(1, 1000000),
   bins = slider(1,100),
@@ -215,6 +243,7 @@ manipulate(
   makeDistributions( data_all
                     ,rnorm(qty)
                     ,variable
+                    ,ditribution_type
                     ,top_items
                     ,qty
                     ,bins
